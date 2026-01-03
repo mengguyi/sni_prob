@@ -1,0 +1,11 @@
+[package]
+name = "sni_prob"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.54", features = ["derive"] }
+rustls = "0.23.35"
+webpki-roots = "1.0.5"
+colored = "2"
+indicatif = "0.17"
