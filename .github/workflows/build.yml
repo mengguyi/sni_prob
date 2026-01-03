@@ -1,0 +1,208 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ["**"]
+    tags:
+      - "v*"
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build (${{ matrix.target }})
+    # If it's a tag push, wait for release creation. Otherwise (PR/push), just run.
+    needs: create-release
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: arm-unknown-linux-gnueabi
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: arm-unknown-linux-gnueabihf
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: i686-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: loongarch64-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: loongarch64-unknown-linux-musl
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: powerpc-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: powerpc64-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: powerpc64le-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: powerpc64le-unknown-linux-musl
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: x86_64-pc-solaris
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-freebsd
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            use_cross: false
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            use_cross: true
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-netbsd
+            use_cross: true
+
+          - os: windows-latest
+            target: aarch64-pc-windows-gnullvm
+            use_cross: true
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            use_cross: false
+
+          - os: windows-latest
+            target: i686-pc-windows-gnu
+            use_cross: false
+
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            use_cross: false
+
+          - os: windows-latest
+            target: x86_64-pc-windows-gnu
+            use_cross: false
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use_cross: false
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            use_cross: false
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            use_cross: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.use_cross
+        run: cargo install cross --locked
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      # For non-release builds (PRs, pushes), just build to verify
+      - name: Build (native)
+        if: matrix.use_cross == false && !startsWith(github.ref, 'refs/tags/v')
+        run: cargo build --verbose --release --target ${{ matrix.target }}
+
+      - name: Build (cross)
+        if: matrix.use_cross == true && !startsWith(github.ref, 'refs/tags/v')
+        run: cross build --verbose --release --target ${{ matrix.target }}
+
+      # For release builds (tags), use taiki-e/upload-rust-binary-action
+      # This action handles building (using cross if needed), packaging (zip/tar.gz), and uploading.
+      - name: Upload Binary (Release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: sni_prob
+          target: ${{ matrix.target }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Note: This action automatically uses 'cross' if it detects it's needed or installed.
+
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
