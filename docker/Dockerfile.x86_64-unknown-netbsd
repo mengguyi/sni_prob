@@ -11,3 +11,27 @@ RUN apt-get update && apt-get install -y curl libarchive-tools && \
     find /tmp/libexecinfo -name "libexecinfo.so*" -exec cp -d {} /usr/x86_64-unknown-netbsd/lib/ \; && \
     find /tmp/libexecinfo -name "libexecinfo.a" -exec cp {} /usr/x86_64-unknown-netbsd/lib/ \; && \
     rm -rf libexecinfo.tgz /tmp/libexecinfo
+
+# Fix for missing getentropy in NetBSD 9.x sysroot
+# We compile a shim and create a static library libgetentropy.a
+RUN echo '#include <unistd.h>' > /tmp/getentropy.c && \
+    echo '#include <fcntl.h>' >> /tmp/getentropy.c && \
+    echo '#include <errno.h>' >> /tmp/getentropy.c && \
+    echo 'int getentropy(void *buf, size_t buflen) {' >> /tmp/getentropy.c && \
+    echo '    int fd = open("/dev/urandom", O_RDONLY);' >> /tmp/getentropy.c && \
+    echo '    if (fd < 0) return -1;' >> /tmp/getentropy.c && \
+    echo '    ssize_t res = read(fd, buf, buflen);' >> /tmp/getentropy.c && \
+    echo '    int save_errno = errno;' >> /tmp/getentropy.c && \
+    echo '    close(fd);' >> /tmp/getentropy.c && \
+    echo '    if (res != (ssize_t)buflen) {' >> /tmp/getentropy.c && \
+    echo '        errno = save_errno;' >> /tmp/getentropy.c && \
+    echo '        return -1;' >> /tmp/getentropy.c && \
+    echo '    }' >> /tmp/getentropy.c && \
+    echo '    return 0;' >> /tmp/getentropy.c && \
+    echo '}' >> /tmp/getentropy.c && \
+    x86_64-unknown-netbsd-gcc -c /tmp/getentropy.c -o /tmp/getentropy.o && \
+    x86_64-unknown-netbsd-ar rcs /usr/x86_64-unknown-netbsd/lib/libgetentropy.a /tmp/getentropy.o && \
+    rm /tmp/getentropy.c /tmp/getentropy.o
+
+# Inject the library into the build process via RUSTFLAGS
+ENV CARGO_TARGET_X86_64_UNKNOWN_NETBSD_RUSTFLAGS="-l getentropy"
