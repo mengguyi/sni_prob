@@ -233,6 +233,11 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Set Solaris build flags
+        if: matrix.target == 'x86_64-pc-solaris'
+        run: |
+          echo "RUSTFLAGS=-C link-arg=-Wl,--allow-shlib-undefined -C link-arg=-Wl,--warn-unresolved-symbols" >> $GITHUB_ENV
+
       # For non-release builds (PRs, pushes), build and upload artifacts
       - name: Build (native)
         if: matrix.use_cross == false && !startsWith(github.ref, 'refs/tags/v')
