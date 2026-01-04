@@ -110,7 +110,7 @@ jobs:
 
           - os: windows-latest
             target: aarch64-pc-windows-gnullvm
-            use_cross: true
+            use_cross: false
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
@@ -151,6 +151,46 @@ jobs:
       - name: Install cross
         if: matrix.use_cross
         run: cargo install cross --locked
+
+      # Install llvm-mingw toolchain for aarch64-pc-windows-gnullvm builds
+      - name: Install llvm-mingw (aarch64 gnullvm)
+        if: matrix.target == 'aarch64-pc-windows-gnullvm'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $versions = @("20240910", "20240620", "20240420")
+          $downloaded = $false
+          foreach ($v in $versions) {
+            $Archive = "llvm-mingw-$v-msvcrt-x86_64.zip"
+            $Url = "https://github.com/mstorsjo/llvm-mingw/releases/download/$v/$Archive"
+            Write-Host "Attempting to download llvm-mingw version $v from $Url"
+            try {
+              Invoke-WebRequest -Uri $Url -OutFile "$Archive" -UseBasicParsing
+              $downloaded = $true
+              $Version = $v
+              break
+            } catch {
+              Write-Host "Download failed for version $v: $_"
+            }
+          }
+          if (-not $downloaded) {
+            throw "Unable to download llvm-mingw toolchain"
+          }
+          Expand-Archive "$Archive" -DestinationPath "$env:USERPROFILE/llvm-mingw" -Force
+          $Root = Get-ChildItem "$env:USERPROFILE/llvm-mingw" -Directory | Select-Object -First 1
+          $Bin = Join-Path $Root.FullName "bin"
+          $Bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "CC_aarch64_pc_windows_gnullvm=aarch64-w64-mingw32-clang" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CXX_aarch64_pc_windows_gnullvm=aarch64-w64-mingw32-clang++" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "AR_aarch64_pc_windows_gnullvm=aarch64-w64-mingw32-ar" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CARGO_TARGET_AARCH64_PC_WINDOWS_GNULLVM_LINKER=aarch64-w64-mingw32-clang" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CARGO_TARGET_AARCH64_PC_WINDOWS_GNULLVM_AR=aarch64-w64-mingw32-ar" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Verify llvm-mingw (aarch64 gnullvm)
+        if: matrix.target == 'aarch64-pc-windows-gnullvm'
+        run: |
+          where aarch64-w64-mingw32-clang
+          aarch64-w64-mingw32-clang --version
 
       # Ensure 32-bit MinGW toolchain is available for i686-pc-windows-gnu builds
       - name: Install MinGW-w64 (i686)
