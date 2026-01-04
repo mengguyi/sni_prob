@@ -8,14 +8,24 @@ RUN echo "void dummy() {}" > dummy.c && \
     # Attempt to use the cross-compiler if available, otherwise fall back to system gcc
     if command -v x86_64-pc-solaris-gcc >/dev/null; then \
         CC=x86_64-pc-solaris-gcc; \
+        AR=x86_64-pc-solaris-ar; \
     else \
         CC=gcc; \
+        AR=ar; \
     fi && \
     mkdir -p /usr/local/solaris-shims && \
-    $CC -shared -fPIC -o /usr/local/solaris-shims/libsendfile.so dummy.c && \
-    $CC -shared -fPIC -o /usr/local/solaris-shims/liblgrp.so dummy.c && \
-    $CC -shared -fPIC -o /usr/local/solaris-shims/libsocket.so dummy.c && \
-    $CC -shared -fPIC -o /usr/local/solaris-shims/libposix4.so dummy.c && \
-    rm dummy.c
+    # Compile object file
+    $CC -c -fPIC -o dummy.o dummy.c && \
+    # Create shared libraries
+    $CC -shared -o /usr/local/solaris-shims/libsendfile.so dummy.o && \
+    $CC -shared -o /usr/local/solaris-shims/liblgrp.so dummy.o && \
+    $CC -shared -o /usr/local/solaris-shims/libsocket.so dummy.o && \
+    $CC -shared -o /usr/local/solaris-shims/libposix4.so dummy.o && \
+    # Create static libraries
+    $AR rcs /usr/local/solaris-shims/libsendfile.a dummy.o && \
+    $AR rcs /usr/local/solaris-shims/liblgrp.a dummy.o && \
+    $AR rcs /usr/local/solaris-shims/libsocket.a dummy.o && \
+    $AR rcs /usr/local/solaris-shims/libposix4.a dummy.o && \
+    rm dummy.c dummy.o
 
 ENV LIBRARY_PATH=/usr/local/solaris-shims:$LIBRARY_PATH
