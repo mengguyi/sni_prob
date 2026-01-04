@@ -162,6 +162,9 @@ jobs:
         shell: bash
         run: |
           echo "C:/tools/mingw32/bin" >> "$GITHUB_PATH"
+          echo "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw32/bin" >> "$GITHUB_PATH"
+          ls -la "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw32/bin" || true
+          ls -la "C:/tools/mingw32/bin" || true
           echo "CC=i686-w64-mingw32-gcc" >> "$GITHUB_ENV"
           echo "CXX=i686-w64-mingw32-g++" >> "$GITHUB_ENV"
           echo "AR=i686-w64-mingw32-ar" >> "$GITHUB_ENV"
