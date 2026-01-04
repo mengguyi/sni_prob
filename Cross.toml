@@ -5,4 +5,4 @@ dockerfile = "./docker/Dockerfile.x86_64-unknown-netbsd"
 dockerfile = "./docker/Dockerfile.x86_64-pc-solaris"
 
 [target.x86_64-pc-solaris.env]
-RUSTFLAGS = "-L native=/usr/local/solaris-shims -C link-arg=-Wl,--allow-shlib-undefined -C link-arg=-Wl,--warn-unresolved-symbols"
+RUSTFLAGS = "-C link-arg=-L/usr/local/solaris-shims -C link-arg=-Wl,--allow-shlib-undefined -C link-arg=-Wl,--warn-unresolved-symbols"
