@@ -152,10 +152,6 @@ jobs:
         if: matrix.use_cross
         run: cargo install cross --locked
 
-      - name: Install libexecinfo (NetBSD target)
-        if: matrix.target == 'x86_64-unknown-netbsd'
-        run: sudo apt-get update && sudo apt-get install -y libexecinfo-dev
-
       # Install llvm-mingw toolchain for aarch64-pc-windows-gnullvm builds
       - name: Install llvm-mingw (aarch64 gnullvm)
         if: matrix.target == 'aarch64-pc-windows-gnullvm'

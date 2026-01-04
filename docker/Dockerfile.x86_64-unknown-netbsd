@@ -1,0 +1,13 @@
+FROM ghcr.io/cross-rs/x86_64-unknown-netbsd:edge
+
+ENV LIBEXECINFO_URL=http://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/x86_64/9.0/All/libexecinfo-1.1nb1.tgz
+
+RUN apt-get update && apt-get install -y curl libarchive-tools && \
+    curl -L $LIBEXECINFO_URL -o libexecinfo.tgz && \
+    mkdir -p /tmp/libexecinfo && \
+    bsdtar -xpf libexecinfo.tgz -C /tmp/libexecinfo && \
+    # Find and copy headers and libraries to the sysroot
+    find /tmp/libexecinfo -name "execinfo.h" -exec cp {} /usr/x86_64-unknown-netbsd/include/ \; && \
+    find /tmp/libexecinfo -name "libexecinfo.so*" -exec cp -d {} /usr/x86_64-unknown-netbsd/lib/ \; && \
+    find /tmp/libexecinfo -name "libexecinfo.a" -exec cp {} /usr/x86_64-unknown-netbsd/lib/ \; && \
+    rm -rf libexecinfo.tgz /tmp/libexecinfo
