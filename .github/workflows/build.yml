@@ -141,7 +141,7 @@ jobs:
             use_cross: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -153,24 +153,24 @@ jobs:
         run: cargo install cross --locked
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/registry
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo index
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cache cargo build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      # For non-release builds (PRs, pushes), just build to verify
+      # For non-release builds (PRs, pushes), build and upload artifacts
       - name: Build (native)
         if: matrix.use_cross == false && !startsWith(github.ref, 'refs/tags/v')
         run: cargo build --verbose --release --target ${{ matrix.target }}
@@ -178,6 +178,16 @@ jobs:
       - name: Build (cross)
         if: matrix.use_cross == true && !startsWith(github.ref, 'refs/tags/v')
         run: cross build --verbose --release --target ${{ matrix.target }}
+
+      - name: Upload Build Artifact
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: actions/upload-artifact@v6
+        with:
+          name: sni_prob-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/sni_prob
+            target/${{ matrix.target }}/release/sni_prob.exe
+          if-no-files-found: ignore
 
       # For release builds (tags), use taiki-e/upload-rust-binary-action
       # This action handles building (using cross if needed), packaging (zip/tar.gz), and uploading.
@@ -195,7 +205,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
