@@ -29,7 +29,7 @@ RUN echo '#include <unistd.h>' > /tmp/getentropy.c && \
     echo '    }' >> /tmp/getentropy.c && \
     echo '    return 0;' >> /tmp/getentropy.c && \
     echo '}' >> /tmp/getentropy.c && \
-    x86_64-unknown-netbsd-gcc -c /tmp/getentropy.c -o /tmp/getentropy.o && \
+    x86_64-unknown-netbsd-gcc -fPIE -c /tmp/getentropy.c -o /tmp/getentropy.o && \
     x86_64-unknown-netbsd-ar rcs /usr/local/x86_64-unknown-netbsd/lib/libgetentropy.a /tmp/getentropy.o && \
     rm /tmp/getentropy.c /tmp/getentropy.o
 
