@@ -163,8 +163,10 @@ jobs:
         run: |
           "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw32/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "C:/tools/mingw32/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:/msys64/mingw32/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           if (Test-Path "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw32/bin") { Get-ChildItem "C:/ProgramData/chocolatey/lib/mingw/tools/install/mingw32/bin" | Select-Object Name }
           if (Test-Path "C:/tools/mingw32/bin") { Get-ChildItem "C:/tools/mingw32/bin" | Select-Object Name }
+          if (Test-Path "C:/msys64/mingw32/bin") { Get-ChildItem "C:/msys64/mingw32/bin" | Select-Object Name }
           "CC=i686-w64-mingw32-gcc" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "CXX=i686-w64-mingw32-g++" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "AR=i686-w64-mingw32-ar" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
