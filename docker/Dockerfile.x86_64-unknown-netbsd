@@ -7,9 +7,9 @@ RUN apt-get update && apt-get install -y curl libarchive-tools && \
     mkdir -p /tmp/libexecinfo && \
     bsdtar -xpf libexecinfo.tgz -C /tmp/libexecinfo && \
     # Find and copy headers and libraries to the sysroot
-    find /tmp/libexecinfo -name "execinfo.h" -exec cp {} /usr/x86_64-unknown-netbsd/include/ \; && \
-    find /tmp/libexecinfo -name "libexecinfo.so*" -exec cp -d {} /usr/x86_64-unknown-netbsd/lib/ \; && \
-    find /tmp/libexecinfo -name "libexecinfo.a" -exec cp {} /usr/x86_64-unknown-netbsd/lib/ \; && \
+    find /tmp/libexecinfo -name "execinfo.h" -exec cp {} /usr/local/x86_64-unknown-netbsd/include/ \; && \
+    find /tmp/libexecinfo -name "libexecinfo.so*" -exec cp -d {} /usr/local/x86_64-unknown-netbsd/lib/ \; && \
+    find /tmp/libexecinfo -name "libexecinfo.a" -exec cp {} /usr/local/x86_64-unknown-netbsd/lib/ \; && \
     rm -rf libexecinfo.tgz /tmp/libexecinfo
 
 # Fix for missing getentropy in NetBSD 9.x sysroot
@@ -30,7 +30,7 @@ RUN echo '#include <unistd.h>' > /tmp/getentropy.c && \
     echo '    return 0;' >> /tmp/getentropy.c && \
     echo '}' >> /tmp/getentropy.c && \
     x86_64-unknown-netbsd-gcc -c /tmp/getentropy.c -o /tmp/getentropy.o && \
-    x86_64-unknown-netbsd-ar rcs /usr/x86_64-unknown-netbsd/lib/libgetentropy.a /tmp/getentropy.o && \
+    x86_64-unknown-netbsd-ar rcs /usr/local/x86_64-unknown-netbsd/lib/libgetentropy.a /tmp/getentropy.o && \
     rm /tmp/getentropy.c /tmp/getentropy.o
 
 # Inject the library into the build process via RUSTFLAGS
