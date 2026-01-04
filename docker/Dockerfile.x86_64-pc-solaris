@@ -1,0 +1,17 @@
+FROM ghcr.io/cross-rs/x86_64-pc-solaris:edge
+
+# Create dummy shared libraries to satisfy the linker.
+# The actual libraries will be provided by the OS at runtime.
+# We place them in a custom directory and add it to LIBRARY_PATH.
+
+RUN echo "" > dummy.c && \
+    # Attempt to use the cross-compiler if available, otherwise fall back to system gcc
+    CC=$(which x86_64-pc-solaris-gcc || which gcc) && \
+    mkdir -p /usr/local/solaris-shims && \
+    $CC -shared -fPIC -o /usr/local/solaris-shims/libsendfile.so dummy.c && \
+    $CC -shared -fPIC -o /usr/local/solaris-shims/liblgrp.so dummy.c && \
+    $CC -shared -fPIC -o /usr/local/solaris-shims/libsocket.so dummy.c && \
+    $CC -shared -fPIC -o /usr/local/solaris-shims/libposix4.so dummy.c && \
+    rm dummy.c
+
+ENV LIBRARY_PATH=/usr/local/solaris-shims:$LIBRARY_PATH
