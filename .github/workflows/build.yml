@@ -170,7 +170,7 @@ jobs:
               $Version = $v
               break
             } catch {
-              Write-Host "Download failed for version $v: $_"
+              Write-Host "Download failed for version ${v}: $_"
             }
           }
           if (-not $downloaded) {
