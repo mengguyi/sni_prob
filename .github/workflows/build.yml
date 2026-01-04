@@ -158,10 +158,10 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $versions = @("20240910", "20240620", "20240420")
+          $versions = @("20251216", "20251202", "20251118")
           $downloaded = $false
           foreach ($v in $versions) {
-            $Archive = "llvm-mingw-$v-msvcrt-x86_64.zip"
+            $Archive = "llvm-mingw-$v-ucrt-x86_64.zip"
             $Url = "https://github.com/mstorsjo/llvm-mingw/releases/download/$v/$Archive"
             Write-Host "Attempting to download llvm-mingw version $v from $Url"
             try {
