@@ -73,14 +73,6 @@ jobs:
             use_cross: true
 
           - os: ubuntu-latest
-            target: powerpc64le-unknown-linux-gnu
-            use_cross: true
-
-          - os: ubuntu-latest
-            target: powerpc64le-unknown-linux-musl
-            use_cross: true
-
-          - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
             use_cross: true
 

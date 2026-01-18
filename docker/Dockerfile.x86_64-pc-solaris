@@ -7,11 +7,11 @@ FROM ghcr.io/cross-rs/x86_64-pc-solaris:edge
 RUN echo "void dummy() {}" > dummy.c && \
     # Attempt to use the cross-compiler if available, otherwise fall back to system gcc
     if command -v x86_64-pc-solaris-gcc >/dev/null; then \
-        CC=x86_64-pc-solaris-gcc; \
-        AR=x86_64-pc-solaris-ar; \
+    CC=x86_64-pc-solaris-gcc; \
+    AR=x86_64-pc-solaris-ar; \
     else \
-        CC=gcc; \
-        AR=ar; \
+    CC=gcc; \
+    AR=ar; \
     fi && \
     mkdir -p /usr/local/solaris-shims && \
     # Compile object file
@@ -29,3 +29,4 @@ RUN echo "void dummy() {}" > dummy.c && \
     rm dummy.c dummy.o
 
 ENV LIBRARY_PATH=/usr/local/solaris-shims:$LIBRARY_PATH
+ENV CARGO_TARGET_X86_64_PC_SOLARIS_RUSTFLAGS="-C link-arg=-L/usr/local/solaris-shims -C link-arg=-Wl,--allow-shlib-undefined -C link-arg=-Wl,--warn-unresolved-symbols"
